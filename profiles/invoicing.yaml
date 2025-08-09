@@ -1,0 +1,5 @@
+
+services:
+  - name: invoicing-api
+    path: /Users/jeremie/Repositories/lightspeed-invoicing/invoicing-api
+    

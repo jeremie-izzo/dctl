@@ -1,0 +1,21 @@
+# Docker Compose configuration
+docker_compose('docker-compose.yaml')
+
+# Loop through all services and add dc_resource with labels
+{{- range $name, $service := .Services }}
+dc_resource(
+    '{{ $name }}',
+    labels=[
+        {{- if or (contains $name "db")}}
+        'database',
+        {{- end }}
+        {{- if or (contains $name "service")}}
+        'infrastructure',
+        {{- end }}
+        {{- if or (contains $name "ui")}}
+        'ui',
+        {{- end }}
+    ],
+)
+{{- end }}
+
