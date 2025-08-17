@@ -1,0 +1,83 @@
+version: "3.9"
+services:
+{{- range $name, $service := .Services }}
+  {{ $service.Name }}:
+  {{- if $service.Image }}
+    image: {{ $service.Image }}
+  {{- end }}
+  {{- if $service.Build }}
+    build:
+      {{- if $service.Build.Context }}
+      context: {{ $service.Build.Context }}
+      {{- end }}
+      {{- if $service.Build.Dockerfile }}
+      dockerfile: {{ $service.Build.Dockerfile }}
+      {{- end }}
+      {{- if $service.Build.Args }}
+      args:
+      {{- range $k, $v := $service.Build.Args }}
+        {{ $k }}: "{{ $v }}"
+      {{- end }}
+      {{- end }}
+  {{- end }}
+  {{- if $service.Command }}
+    command:
+    {{- range $service.Command }}
+      - {{ . | quote }}
+    {{- end }}
+  {{- end }}
+  {{- if $service.Ports }}
+    ports:
+    {{- range $service.Ports }}
+      - "{{ .Host }}:{{ .Container }}"
+    {{- end }}
+  {{- end }}
+  {{- if $service.Env }}
+    environment:
+    {{- range $k, $v := $service.Env }}
+      {{ $k }}: "{{ $v }}"
+    {{- end }}
+  {{- end }}
+  {{- if $service.DependsOn }}
+    depends_on:
+    {{- range $service.DependsOn }}
+      - {{ . }}
+    {{- end }}
+  {{- end }}
+  {{- if $service.Healthcheck }}
+    healthcheck:
+      {{- if $service.Healthcheck.Cmd }}
+      test: [ "CMD"{{ $first := true }}{{ range .Healthcheck.Cmd }}{{ if $first }}{{ $first = false }}{{ else }},{{ end }} {{ printf "%q" . }}{{ end }} ]
+      {{- else if $service.Healthcheck.HTTPGet }}
+      test:
+        - CMD-SHELL
+        - {{ printf "curl -fsS %s || exit 1" $service.Healthcheck.HTTPGet | quote }}
+      {{- else if $service.Healthcheck.TCPSocket }}
+      {{- /* TCPSocket format expected "host:port" */}}
+      test:
+        - CMD-SHELL
+        - {{ printf "sh -c '</dev/tcp/%s'" $service.Healthcheck.TCPSocket | quote }}
+      {{- end }}
+      {{- if $service.Healthcheck.Interval }}
+      interval: {{ $service.Healthcheck.Interval }}
+      {{- else }}
+      interval: 2s
+      {{- end }}
+      {{- if $service.Healthcheck.Timeout }}
+      timeout: {{ $service.Healthcheck.Timeout }}
+      {{- else }}
+      timeout: 500ms
+      {{- end }}
+      {{- if $service.Healthcheck.Retries }}
+      retries: {{ $service.Healthcheck.Retries }}
+      {{- else }}
+      retries: 30
+      {{- end }}
+  {{- end }}
+  {{- if $service.Volumes }}
+    volumes:
+    {{- range $service.Volumes }}
+      - "{{ .HostPath }}:{{ .ContainerPath }}{{ if .ReadOnly }}:ro{{ end }}"
+    {{- end }}
+  {{- end }}
+{{ end }}

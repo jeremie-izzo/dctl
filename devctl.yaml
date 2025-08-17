@@ -1,0 +1,16 @@
+version: 1
+name: my-app
+
+engine: tilttext
+providers:
+  - docker-compose
+
+# Default plugin chain for services (each service can override)
+plugins:
+  - compose
+
+services:
+  # Prebuilt add-on (preset)
+  mysql:
+    preset: mysql
+  # Custom service

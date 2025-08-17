@@ -1,0 +1,21 @@
+# Tiltfile.tmpl
+{{- range .ComposeFiles }}
+docker_compose('{{ . }}')
+{{- end }}
+
+{{- range $name, $opts := .DCResources }}
+dc_resource('{{$name}}'{{if $opts.ResourceDeps}}, resource_deps={{to_list $opts.ResourceDeps}}{{end}}{{if $opts.Labels}}, labels={{to_list $opts.Labels}}{{end}}{{if eq $opts.TriggerMode "manual"}}, trigger_mode=TRIGGER_MODE_MANUAL{{end}})
+{{- end }}
+
+{{- range .DockerBuilds }}
+docker_build('{{.Image}}', '{{.Context}}'{{if .Dockerfile}}, dockerfile='{{.Dockerfile}}'{{end}}{{if .Args}}, build_args={{{- range $k, $v := .Args }}'{{$k}}': '{{$v}}',{{end}}}{{end}})
+{{- end }}
+
+{{- range .Locals }}
+local_resource('{{.Name}}', cmd='bash -lc {{ sh .Cmd }}'{{if .Deps}}, deps={{to_list .Deps}}{{end}})
+{{- end }}
+
+{{- range .K8sResources }}
+k8s_yaml({{to_list .Manifests}})
+{{- if .Namespace }}k8s_resource(ns='{{.Namespace}}'){{end}}
+{{- end }}
